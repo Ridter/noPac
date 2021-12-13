@@ -230,7 +230,7 @@ if __name__ == '__main__':
     group.add_argument('-dc-ip', action='store',metavar = "ip",  help='IP of the domain controller to use. '
                                                                       'Useful if you can\'t translate the FQDN.'
                                                                       'specified in the account parameter will be used')
-    parser.add_argument('-use-ldaps', action='store_false', help='Use LDAPS instead of LDAP')
+    parser.add_argument('-use-ldap', action='store_true', help='Use LDAP instead of LDAPS')
 
 
     exec =  parser.add_argument_group('execute options')

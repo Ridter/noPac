@@ -16,7 +16,8 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --impersonate IMPERSONATE
-                        target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN specified
+                        target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN
+                        specified
   -domain-netbios NETBIOSNAME
                         Domain NetBIOS name. Required if the DC has multiple domains.
   -new-name NEWNAME     Add new computer name, if not specified, will be random generated.
@@ -24,7 +25,7 @@ optional arguments:
   -ts                   Adds timestamp to every logging output
   -shell                Drop a shell via smbexec
   -dump                 Dump Hashs via secretsdump
-  -use-ldaps            Use LDAPS instead of LDAP
+  -use-ldap             Use LDAP instead of LDAPS
   -mode {SHARE,SERVER}  mode to use (default SHARE, SERVER needs root!)
 
 authentication:
@@ -61,7 +62,7 @@ dump options:
                         Remote exec method to use at target (only when using -use-vss). Default: smbexec
 ```
 
->Note: If -host-name is not specified, the tool will automatically get the domain control hostname, please select the hostname of the host specified by -dc-ip. If --impersonate is not specified, the tool will randomly choose a doamin admin to exploit.
+>Note: If -host-name is not specified, the tool will automatically get the domain control hostname, please select the hostname of the host specified by -dc-ip. If --impersonate is not specified, the tool will randomly choose a doamin admin to exploit. Use ldaps by default, iif you get ssl error, try add -use-ldap .
 
 ### GetST
 ```

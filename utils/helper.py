@@ -222,19 +222,17 @@ def ldap3_kerberos_login(connection, target, user, password, domain='', lmhash='
 
     return True
 
-def init_ldap_connection(target, tls_version, args, domain, username, password, lmhash, nthash):
+def init_ldap_connection(target, no_tls, args, domain, username, password, lmhash, nthash):
     user = '%s\\%s' % (domain, username)
-    if tls_version is not None:
-        use_ssl = True
-        port = 636
-        tls = ldap3.Tls(validate=ssl.CERT_NONE, version=tls_version)
-    else:
+    if no_tls:
         use_ssl = False
         port = 389
-        tls = None
-    ldap_server = ldap3.Server(target, get_info=ldap3.ALL, port=port, use_ssl=use_ssl, tls=tls)
+    else:
+        use_ssl = True
+        port = 636
+    ldap_server = ldap3.Server(target, get_info=ldap3.ALL, port=port, use_ssl=use_ssl)
     if args.k:
-        ldap_session = ldap3.Connection(ldap_server)
+        ldap_session = ldap3.Connection(ldap_server,sasl_credentials=(target,),authentication=ldap3.SASL, sasl_mechanism=ldap3.GSSAPI)
         ldap_session.bind()
         ldap3_kerberos_login(ldap_session, target, username, password, domain, lmhash, nthash, args.aesKey, kdcHost=args.dc_ip)
     elif args.hashes is not None:
@@ -253,14 +251,8 @@ def init_ldap_session(args, domain, username, password, lmhash, nthash):
             target = args.dc_ip
         else:
             target = domain
+    return init_ldap_connection(target, args.use_ldap, args, domain, username, password, lmhash, nthash)
 
-    if args.use_ldaps is True:
-        try:
-            return init_ldap_connection(target, ssl.PROTOCOL_TLSv1_2, args, domain, username, password, lmhash, nthash)
-        except ldap3.core.exceptions.LDAPSocketOpenError:
-            return init_ldap_connection(target, ssl.PROTOCOL_TLSv1, args, domain, username, password, lmhash, nthash)
-    else:
-        return init_ldap_connection(target, None, args, domain, username, password, lmhash, nthash)
 
 
 def get_user_info(samname, ldap_session, domain_dumper):
