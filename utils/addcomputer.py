@@ -28,7 +28,7 @@ class AddComputerSAMR:
         self.__aesKey = cmdLineOptions.aesKey
         self.__doKerberos = cmdLineOptions.k
         self.__target = cmdLineOptions.dc_host
-        self.__kdcHost = cmdLineOptions.dc_host
+        self.__kdcHost = cmdLineOptions.dc_ip
         self.__computerName = computer_name
         self.__computerPassword = computer_pass
         self.__method = 'SAMR'

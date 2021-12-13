@@ -119,7 +119,7 @@ class SMBServer(Thread):
 
 class CMDEXEC:
     def __init__(self, username='', password='', domain='', hashes=None, aesKey=None, doKerberos=None,
-                 kdcHost=None, mode=None, share=None, port=445, serviceName=SERVICE_NAME, shell_type=None):
+                 kdcHost=None, mode=None, share=None, port=445, serviceName=SERVICE_NAME, shell_type=None,codec="utf-8"):
 
         self.__username = username
         self.__password = password
@@ -135,6 +135,7 @@ class CMDEXEC:
         self.__mode  = mode
         self.__shell_type = shell_type
         self.shell = None
+        self.codec = codec
         if hashes is not None:
             self.__lmhash, self.__nthash = hashes.split(':')
 
@@ -156,7 +157,7 @@ class CMDEXEC:
                 serverThread = SMBServer()
                 serverThread.daemon = True
                 serverThread.start()
-            self.shell = RemoteShell(self.__share, rpctransport, self.__mode, self.__serviceName, self.__shell_type)
+            self.shell = RemoteShell(self.__share, rpctransport, self.__mode, self.__serviceName, self.__shell_type, self.codec)
             self.shell.cmdloop()
             if self.__mode == 'SERVER':
                 serverThread.stop()
@@ -171,7 +172,7 @@ class CMDEXEC:
             sys.exit(1)
 
 class RemoteShell(cmd.Cmd):
-    def __init__(self, share, rpc, mode, serviceName, shell_type):
+    def __init__(self, share, rpc, mode, serviceName, shell_type, codec):
         cmd.Cmd.__init__(self)
         self.__share = share
         self.__mode = mode
@@ -184,6 +185,7 @@ class RemoteShell(cmd.Cmd):
         self.__pwsh = 'powershell.exe -NoP -NoL -sta -NonI -W Hidden -Exec Bypass -Enc '
         self.__serviceName = serviceName
         self.__rpc = rpc
+        self.codec = codec
         self.intro = '[!] Launching semi-interactive shell - Careful what you execute'
 
         self.__scmr = rpc.get_dce_rpc()
@@ -297,12 +299,12 @@ class RemoteShell(cmd.Cmd):
     def send_data(self, data):
         self.execute_remote(data, self.__shell_type)
         try:
-            print(self.__outputBuffer.decode(CODEC))
+            print(self.__outputBuffer.decode(self.codec))
         except UnicodeDecodeError:
             logging.error('Decoding error detected, consider running chcp.com at the target,\nmap the result with '
                           'https://docs.python.org/3/library/codecs.html#standard-encodings\nand then execute smbexec.py '
                           'again with -codec and the corresponding codec')
-            print(self.__outputBuffer.decode(CODEC, errors='replace'))
+            print(self.__outputBuffer.decode(self.codec, errors='replace'))
         self.__outputBuffer = b''
 
 
@@ -394,7 +396,7 @@ if __name__ == '__main__':
 
     try:
         executer = CMDEXEC(username, password, domain, options.hashes, options.aesKey, options.k, options.dc_ip,
-                           options.mode, options.share, int(options.port), options.service_name, options.shell_type)
+                           options.mode, options.share, int(options.port), options.service_name, options.shell_type,options.codec)
         executer.run(remoteName, options.target_ip)
     except Exception as e:
         if logging.getLogger().level == logging.DEBUG:

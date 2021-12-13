@@ -10,6 +10,7 @@ import os
 import json
 from impacket import version
 from impacket.examples import logger, utils
+from dns import resolver
 from impacket.smbconnection import SMBConnection
 from impacket.spnego import SPNEGO_NegTokenInit, TypesMech
 from ldap3.utils.conv import escape_filter_chars
@@ -274,17 +275,33 @@ def get_user_info(samname, ldap_session, domain_dumper):
         return False
 
 
+def host2ip(hostname, nameserver,dns_timeout,dns_tcp):
+    dnsresolver = resolver.Resolver()
+    if nameserver:
+        dnsresolver.nameservers = [nameserver]
+    dnsresolver.lifetime = float(dns_timeout)
+    try:
+        q = dnsresolver.query(hostname, 'A', tcp=dns_tcp)
+        for r in q:
+            addr = r.address
+        return addr
+    except Exception as e:
+        logging.error("Resolved Failed: %s" % e)
+        return None
 
-def get_dc_host(ldap_session, domain_dumper):
+def get_dc_host(ldap_session, domain_dumper,options):
     dc_host = {}
-    dc_host['name'] = []
-    dc_host['dNSHostName'] = []
     ldap_session.search(domain_dumper.root, '(&(objectCategory=Computer)(userAccountControl:1.2.840.113556.1.4.803:=8192))', 
             attributes=['name','dNSHostName'])
     if len(ldap_session.entries) > 0:
         for host in ldap_session.entries:
-            dc_host['name'].append(str(host['name']))
-            dc_host['dNSHostName'].append(str(host['dNSHostName']))
+            dc_host[str(host['name'])] = {}
+            dc_host[str(host['name'])]['dNSHostName'] = str(host['dNSHostName'])
+            host_ip = host2ip(str(host['dNSHostName']), options.dc_ip, 3, True)
+            if host_ip:
+                dc_host[str(host['name'])]['HostIP'] = host_ip
+            else:
+                dc_host[str(host['name'])]['HostIP'] = ''
     return dc_host
 
 
