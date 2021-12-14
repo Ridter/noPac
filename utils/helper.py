@@ -55,7 +55,8 @@ def parse_identity(args):
         args.k = True
 
     if args.hashes is not None:
-        lmhash, nthash = args.hashes.split(':')
+        hashes = ("aad3b435b51404eeaad3b435b51404ee:".upper() + args.hashes.split(":")[1]).upper()
+        lmhash, nthash = hashes.split(':')
     else:
         lmhash = ''
         nthash = ''
@@ -63,7 +64,7 @@ def parse_identity(args):
     return domain, username, password, lmhash, nthash
 
 def ldap3_kerberos_login(connection, target, user, password, domain='', lmhash='', nthash='', aesKey='', kdcHost=None,
-                         TGT=None, TGS=None, useCache=True):
+                         TGT=None, TGS=None, useCache=False):
     from pyasn1.codec.ber import encoder, decoder
     from pyasn1.type.univ import noValue
     """
@@ -140,7 +141,7 @@ def ldap3_kerberos_login(connection, target, user, password, domain='', lmhash='
             elif user == '' and len(ccache.principal.components) > 0:
                 user = ccache.principal.components[0]['data'].decode('utf-8')
                 logging.debug('Username retrieved from CCache: %s' % user)
-
+       
     # First of all, we need to get a TGT for the user
     userName = Principal(user, type=constants.PrincipalNameType.NT_PRINCIPAL.value)
     if TGT is None:
@@ -232,9 +233,9 @@ def init_ldap_connection(target, no_tls, args, domain, username, password, lmhas
         port = 636
     ldap_server = ldap3.Server(target, get_info=ldap3.ALL, port=port, use_ssl=use_ssl)
     if args.k:
-        ldap_session = ldap3.Connection(ldap_server,sasl_credentials=(target,),authentication=ldap3.SASL, sasl_mechanism=ldap3.GSSAPI)
+        ldap_session = ldap3.Connection(ldap_server)
         ldap_session.bind()
-        ldap3_kerberos_login(ldap_session, target, username, password, domain, lmhash, nthash, args.aesKey, kdcHost=args.dc_ip)
+        ldap3_kerberos_login(ldap_session, target, username, password, domain, lmhash, nthash, args.aesKey, kdcHost=args.dc_ip,useCache=args.no_pass)
     elif args.hashes is not None:
         ldap_session = ldap3.Connection(ldap_server, user=user, password=lmhash + ":" + nthash, authentication=ldap3.NTLM, auto_bind=True)
     else:

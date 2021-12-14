@@ -12,20 +12,12 @@ import argparse
 import logging
 import sys
 import string
-import random
-import ssl
-import os
 from binascii import unhexlify
 import ldapdomaindump
-import ldap3
 from utils.helper import *
 from impacket.krb5.kerberosv5 import getKerberosTGT
 from impacket.krb5 import constants
 from impacket.krb5.types import Principal
-
-
-
-characters = list(string.ascii_letters + string.digits + "!@#$%^&*()")
 
 def banner():
     return """
@@ -46,10 +38,12 @@ def getTGT(username, options, kdc,requestPAC=True):
         __lmhash, __nthash = options.hashes.split(':')
     else:
         __lmhash = __nthash = ''
-
+    aesKey = ''
+    if options.aesKey is not None:
+        aesKey = options.aesKey
     try:
         tgt, cipher, oldSessionKey, sessionKey = getKerberosTGT(userName, password, domain,
-                                                            unhexlify(__lmhash), unhexlify(__nthash), '',
+                                                            unhexlify(__lmhash), unhexlify(__nthash), aesKey,
                                                             kdc,requestPAC=requestPAC)
         return tgt
     except Exception as e:
@@ -152,6 +146,9 @@ if __name__ == '__main__':
         if options.aesKey is not None:
             options.k = True
 
+        if options.no_pass:
+            logging.info("Not supoort ccache")
+            exit()
 
         vulscan(username, password, domain, options)
     except Exception as e:
