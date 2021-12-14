@@ -62,7 +62,7 @@ dump options:
                         Remote exec method to use at target (only when using -use-vss). Default: smbexec
 ```
 
->Note: If -host-name is not specified, the tool will automatically get the domain control hostname, please select the hostname of the host specified by -dc-ip. If --impersonate is not specified, the tool will randomly choose a doamin admin to exploit. Use ldaps by default, iif you get ssl error, try add -use-ldap .
+>Note: If -host-name is not specified, the tool will automatically get the domain control hostname, please select the hostname of the host specified by -dc-ip. If --impersonate is not specified, the tool will randomly choose a doamin admin to exploit. Use ldaps by default, if you get ssl error, try add -use-ldap .
 
 ### GetST
 ```
