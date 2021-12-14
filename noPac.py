@@ -238,7 +238,7 @@ if __name__ == '__main__':
     exec =  parser.add_argument_group('execute options')
     exec.add_argument('-port', choices=['139', '445'], nargs='?', default='445', metavar="destination port",
                        help='Destination port to connect to SMB Server')
-    parser.add_argument('-mode', action='store', choices = {'SERVER','SHARE'}, default='SHARE',
+    exec.add_argument('-mode', action='store', choices = {'SERVER','SHARE'}, default='SHARE',
                         help='mode to use (default SHARE, SERVER needs root!)')
     exec.add_argument('-share', action='store', default='ADMIN$', help='share where the output will be grabbed from (default ADMIN$)')
     exec.add_argument('-shell-type', action='store', default = 'cmd', choices = ['cmd', 'powershell'], help='choose '

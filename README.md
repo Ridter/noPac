@@ -16,8 +16,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --impersonate IMPERSONATE
-                        target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN
-                        specified
+                        target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN specified
   -domain-netbios NETBIOSNAME
                         Domain NetBIOS name. Required if the DC has multiple domains.
   -new-name NEWNAME     Add new computer name, if not specified, will be random generated.
@@ -26,7 +25,6 @@ optional arguments:
   -shell                Drop a shell via smbexec
   -dump                 Dump Hashs via secretsdump
   -use-ldap             Use LDAP instead of LDAPS
-  -mode {SHARE,SERVER}  mode to use (default SHARE, SERVER needs root!)
 
 authentication:
   -hashes LMHASH:NTHASH
@@ -40,6 +38,7 @@ authentication:
 execute options:
   -port [destination port]
                         Destination port to connect to SMB Server
+  -mode {SERVER,SHARE}  mode to use (default SHARE, SERVER needs root!)
   -share SHARE          share where the output will be grabbed from (default ADMIN$)
   -shell-type {cmd,powershell}
                         choose a command processor for the semi-interactive shell
