@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#coding: utf-8
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -151,9 +153,12 @@ if __name__ == '__main__':
             exit()
 
         vulscan(username, password, domain, options)
+    except ldap3.core.exceptions.LDAPBindError as e:
+        logging.error(f"Pls check your account. Error: {e}")
+    except ldap3.core.exceptions.LDAPSocketOpenError as e:
+         logging.error(f"If ssl error, add `-use-ldap` parameter to connect with ldap. Error: {e}")
     except Exception as e:
         if logging.getLogger().level == logging.DEBUG:
             import traceback
             traceback.print_exc()
-        print(str(e))
-
+        logging.error(e)
