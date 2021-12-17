@@ -19,10 +19,13 @@ optional arguments:
                         target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN specified
   -domain-netbios NETBIOSNAME
                         Domain NetBIOS name. Required if the DC has multiple domains.
-  -new-name NEWNAME     Add new computer name, if not specified, will be random generated.
+  -new-name NEWNAME     Target computer name, if not specified, will be random generated.
+  -new-pass PASSWORD    Add new computer password, if not specified, will be random generated.
   -debug                Turn DEBUG output ON
   -ts                   Adds timestamp to every logging output
   -shell                Drop a shell via smbexec
+  -no-add               Forcibly change the password of the target computer.
+  -create-child         Current account have permission to CreateChild.
   -dump                 Dump Hashs via secretsdump
   -use-ldap             Use LDAP instead of LDAPS
 
