@@ -63,12 +63,7 @@ def vulscan(username, password, domain, options):
     for i in domain_dumper.getDomainPolicy():
         MachineAccountQuota = int(str(i['ms-DS-MachineAccountQuota']))
 
-    if MachineAccountQuota < 0:
-        logging.error(f'Cannot exploit , ms-DS-MachineAccountQuota {MachineAccountQuota}')
-        exit()
-    else:
-        logging.info(f'Current ms-DS-MachineAccountQuota = {MachineAccountQuota}')
-
+    logging.info(f'Current ms-DS-MachineAccountQuota = {MachineAccountQuota}')
 
     dcinfo = get_dc_host(ldap_session, domain_dumper,options)
     if len(dcinfo)== 0:
