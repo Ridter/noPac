@@ -21,6 +21,9 @@ optional arguments:
                         Domain NetBIOS name. Required if the DC has multiple domains.
   -new-name NEWNAME     Target computer name, if not specified, will be random generated.
   -new-pass PASSWORD    Add new computer password, if not specified, will be random generated.
+  -old-pass PASSWORD    Target computer password, use if you know the password of the target you input with -new-name.
+  -old-hash LMHASH:NTHASH
+                        Target computer hashes, use if you know the hash of the target you input with -new-name.
   -debug                Turn DEBUG output ON
   -ts                   Adds timestamp to every logging output
   -shell                Drop a shell via smbexec
@@ -41,7 +44,7 @@ authentication:
 execute options:
   -port [destination port]
                         Destination port to connect to SMB Server
-  -mode {SERVER,SHARE}  mode to use (default SHARE, SERVER needs root!)
+  -mode {SHARE,SERVER}  mode to use (default SHARE, SERVER needs root!)
   -share SHARE          share where the output will be grabbed from (default ADMIN$)
   -shell-type {cmd,powershell}
                         choose a command processor for the semi-interactive shell

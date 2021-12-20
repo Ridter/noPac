@@ -259,7 +259,6 @@ def init_ldap_session(args, domain, username, password, lmhash, nthash):
 def get_user_info(samname, ldap_session, domain_dumper):
     ldap_session.search(domain_dumper.root, '(sAMAccountName=%s)' % escape_filter_chars(samname), 
             attributes=['objectSid','ms-DS-MachineAccountQuota'])
-
     try:
         et = ldap_session.entries[0]
         js = et.entry_to_json()
@@ -342,6 +341,9 @@ class GETTGT:
         self.__kdcHost = options.dc_ip
         if options.hashes is not None:
             self.__lmhash, self.__nthash = options.hashes.split(':')
+        if options.old_hash:
+            self.__password = None
+            self.__lmhash, self.__nthash = options.old_pass.split(':')
 
     def saveTicket(self, ticket, sessionKey):
         logging.info('Saving ticket in %s' % (self.__user + '.ccache'))
