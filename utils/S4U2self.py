@@ -680,7 +680,7 @@ class GETST:
             if str(e).find('KDC_ERR_BADOPTION') >= 0:
                 logging.error('Probably SPN is not allowed to delegate by user %s or initial TGT not forwardable' % self.__user)
 
-            return
+            raise e
         self.__saveFileName = self.impersonate_target
 
         self.saveTicket(tgs, oldSessionKey)

