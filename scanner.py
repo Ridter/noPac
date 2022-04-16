@@ -65,7 +65,11 @@ def vulscan(username, password, domain, options):
 
     logging.info(f'Current ms-DS-MachineAccountQuota = {MachineAccountQuota}')
 
-    dcinfo = get_dc_host(ldap_session, domain_dumper,options)
+    if options.all:
+        dcinfo = get_dc_host(ldap_session, domain_dumper,options)
+    else:
+        dcinfo = {"dc": {"dNSHostName": options.dc_ip,"HostIP": options.dc_ip}}
+        
     if len(dcinfo)== 0:
         logging.error("Cannot get domain info")
         exit()
@@ -112,6 +116,7 @@ if __name__ == '__main__':
                                                                       'Useful if you can\'t translate the FQDN.'
                                                                       'specified in the account parameter will be used')
     parser.add_argument('-use-ldap', action='store_true', help='Use LDAP instead of LDAPS')
+    parser.add_argument('-all', action='store_true', help='Check all domain controllers')
 
 
     if len(sys.argv)==1:
