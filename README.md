@@ -31,7 +31,7 @@ options:
   -no-add               Forcibly change the password of the target computer.
   -create-child         Current account have permission to CreateChild.
   -dump                 Dump Hashs via secretsdump
-  -spn SPN              Specify the SPN for the ticket
+  -spn SPN              Specify the SPN for the ticket (Default: cifs)
   -use-ldap             Use LDAP instead of LDAPS
 
 authentication:
@@ -47,7 +47,7 @@ authentication:
 execute options:
   -port [destination port]
                         Destination port to connect to SMB Server
-  -mode {SERVER,SHARE}  mode to use (default SHARE, SERVER needs root!)
+  -mode {SHARE,SERVER}  mode to use (default SHARE, SERVER needs root!)
   -share SHARE          share where the output will be grabbed from (default ADMIN$)
   -shell-type {cmd,powershell}
                         choose a command processor for the semi-interactive shell
