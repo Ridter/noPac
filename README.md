@@ -13,10 +13,11 @@ positional arguments:
   [domain/]username[:password]
                         Account used to authenticate to DC.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --impersonate IMPERSONATE
-                        target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to the SPN specified
+                        target username that will be impersonated (thru S4U2Self) for quering the ST. Keep in mind this will only work if the identity provided in this scripts is allowed for delegation to
+                        the SPN specified
   -domain-netbios NETBIOSNAME
                         Domain NetBIOS name. Required if the DC has multiple domains.
   -target-name NEWNAME  Target computer name, if not specified, will be random generated.
@@ -30,13 +31,15 @@ optional arguments:
   -no-add               Forcibly change the password of the target computer.
   -create-child         Current account have permission to CreateChild.
   -dump                 Dump Hashs via secretsdump
+  -spn SPN              Specify the SPN for the ticket
   -use-ldap             Use LDAP instead of LDAPS
 
 authentication:
   -hashes LMHASH:NTHASH
                         NTLM hashes, format is LMHASH:NTHASH
   -no-pass              don't ask for password (useful for -k)
-  -k                    Use Kerberos authentication. Grabs credentials from ccache file (KRB5CCNAME) based on account parameters. If valid credentials cannot be found, it will use the ones specified in the command line
+  -k                    Use Kerberos authentication. Grabs credentials from ccache file (KRB5CCNAME) based on account parameters. If valid credentials cannot be found, it will use the ones specified in the
+                        command line
   -aesKey hex key       AES key to use for Kerberos Authentication (128 or 256 bits)
   -dc-host hostname     Hostname of the domain controller to use. If ommited, the domain part (FQDN) specified in the account parameter will be used
   -dc-ip ip             IP of the domain controller to use. Useful if you can't translate the FQDN.specified in the account parameter will be used
