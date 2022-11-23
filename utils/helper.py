@@ -346,7 +346,7 @@ class GETTGT:
             self.__lmhash, self.__nthash = options.old_pass.split(':')
 
     def saveTicket(self, ticket, sessionKey):
-        logging.info('Saving ticket in %s' % (self.__user + '.ccache'))
+        logging.info('Saving a DC\'s ticket in %s' % (self.__user + '.ccache'))
         from impacket.krb5.ccache import CCache
         ccache = CCache()
 

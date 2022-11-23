@@ -87,7 +87,7 @@ class GETST:
 
 
     def saveTicket(self, ticket, sessionKey):
-        logging.info('Saving ticket in %s' % (self.__saveFileName + '.ccache'))
+        logging.info('Saving a user\'s ticket in %s' % (self.__saveFileName + '.ccache'))
         ccache = CCache()
 
         ccache.fromTGS(ticket, sessionKey, sessionKey)
