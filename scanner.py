@@ -156,7 +156,7 @@ if __name__ == '__main__':
     except ldap3.core.exceptions.LDAPBindError as e:
         logging.error(f"Pls check your account. Error: {e}")
     except ldap3.core.exceptions.LDAPSocketOpenError as e:
-         logging.error(f"If ssl error, add `-use-ldap` parameter to connect with ldap. Error: {e}")
+        logging.error(f"If ssl error, add `-use-ldap` parameter to connect with ldap. Error: {e}")
     except Exception as e:
         if logging.getLogger().level == logging.DEBUG:
             import traceback

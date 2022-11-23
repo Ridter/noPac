@@ -259,8 +259,6 @@ def samtheadmin(username, password, domain, options):
 
     exploit(dcfull, adminticket, options)
 
-    print(f"Execute this command now - export KRB5CCNAME={os.getcwd()}/{adminticket}")
-
 
 if __name__ == '__main__':
     print(banner())
