@@ -203,6 +203,7 @@ def samtheadmin(username, password, domain, options):
             logging.info(f'{new_computer_name} sAMAccountName == {dc_host}')
         else:
             logging.error('Cannot rename the machine account , Reason {}'.format(ldap_session.result['message']))
+            logging.info(f'Target probably patched!')
             if not options.no_add:
                 del_added_computer(ldap_session, domain_dumper, new_computer_name)
             return
